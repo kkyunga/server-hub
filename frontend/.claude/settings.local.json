@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npx tailwindcss:*)",
+      "Bash(timeout /t 3)",
+      "Bash(npm uninstall:*)",
+      "Bash(ping:*)",
+      "Bash(npx shadcn@latest add:*)"
+    ]
+  }
+}
