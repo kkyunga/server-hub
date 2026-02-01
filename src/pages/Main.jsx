@@ -1002,18 +1002,21 @@ export default function Main() {
     username: "",
     password: "",
     keyFile: null,
-    softwareToInstall: [],
+    softwareToInstall: [
+      { name: "java", path: "/usr/lib/jvm" },
+      { name: "apache", path: "/usr/local/apache2" },
+    ],
   });
 
   const softwareOptions = [
-    { name: "Apache", path: "/usr/local/apache2" },
-    { name: "Tomcat", path: "/opt/tomcat" },
-    { name: "Java", path: "/usr/lib/jvm" },
-    { name: "PHP", path: "/usr/local/php" },
-    { name: "MySQL", path: "/var/lib/mysql" },
-    { name: "Nginx", path: "/etc/nginx" },
-    { name: "Node.js", path: "/usr/local/node" },
-    { name: "Python", path: "/usr/local/python" },
+    { name: "apache", path: "/usr/local/apache2" },
+    { name: "tomcat", path: "/opt/tomcat" },
+    { name: "java", path: "/usr/lib/jvm" },
+    { name: "php", path: "/usr/local/php" },
+    { name: "mysql", path: "/var/lib/mysql" },
+    { name: "nginx", path: "/etc/nginx" },
+    { name: "nodejs", path: "/usr/local/node" },
+    { name: "python", path: "/usr/local/python" },
   ];
 
   const handleSoftwareToggle = (software) => {
@@ -1111,7 +1114,7 @@ export default function Main() {
       });
 
       console.log("응답 상태:", response.status);
-
+      debugger;
       if (!response.ok) {
         throw new Error(`서버 추가 실패: ${response.status}`);
       }
@@ -1143,7 +1146,10 @@ export default function Main() {
         username: "",
         password: "",
         keyFile: null,
-        softwareToInstall: [],
+        softwareToInstall: [
+          { name: "java", path: "/usr/lib/jvm" },
+          { name: "apache", path: "/usr/local/apache2" },
+        ],
       });
 
       console.log("서버 추가 완료:", server);
@@ -1588,10 +1594,12 @@ export default function Main() {
                           </div>
 
                           <div className="space-y-2">
-                            <Label htmlFor="cloudService">클라우드 서비스</Label>
+                            <Label htmlFor="cloudService">
+                              클라우드 서비스
+                            </Label>
                             <select
                               id="cloudService"
-                              className="w-full h-10 px-3 border rounded-md border-input bg-background text-sm"
+                              className="w-full h-10 px-3 text-sm border rounded-md border-input bg-background"
                               value={newServer.cloudService}
                               onChange={(e) =>
                                 setNewServer({
@@ -1614,16 +1622,25 @@ export default function Main() {
                             <Label htmlFor="osType">서버 종류</Label>
                             <select
                               id="osType"
-                              className="w-full h-10 px-3 border rounded-md border-input bg-background text-sm"
+                              className="w-full h-10 px-3 text-sm border rounded-md border-input bg-background"
                               value={newServer.osType}
                               onChange={(e) => {
-                                const osType = e.target.value
-                                const defaultVersion = osType === "Linux" ? "Ubuntu 22.04" : "Windows Server 2022"
-                                setNewServer({ ...newServer, osType, osVersion: defaultVersion })
+                                const osType = e.target.value;
+                                const defaultVersion =
+                                  osType === "Linux"
+                                    ? "Ubuntu 22.04"
+                                    : "Windows Server 2022";
+                                setNewServer({
+                                  ...newServer,
+                                  osType,
+                                  osVersion: defaultVersion,
+                                });
                               }}
                             >
                               <option value="Linux">Linux</option>
-                              <option value="Windows Server">Windows Server</option>
+                              <option value="Windows Server">
+                                Windows Server
+                              </option>
                             </select>
                           </div>
 
@@ -1631,28 +1648,45 @@ export default function Main() {
                             <Label htmlFor="osVersion">OS 버전</Label>
                             <select
                               id="osVersion"
-                              className="w-full h-10 px-3 border rounded-md border-input bg-background text-sm"
+                              className="w-full h-10 px-3 text-sm border rounded-md border-input bg-background"
                               value={newServer.osVersion}
                               onChange={(e) =>
-                                setNewServer({ ...newServer, osVersion: e.target.value })
+                                setNewServer({
+                                  ...newServer,
+                                  osVersion: e.target.value,
+                                })
                               }
                             >
                               {newServer.osType === "Linux" ? (
                                 <>
-                                  <option value="Ubuntu 22.04">Ubuntu 22.04 LTS</option>
-                                  <option value="Ubuntu 20.04">Ubuntu 20.04 LTS</option>
+                                  <option value="Ubuntu 22.04">
+                                    Ubuntu 22.04 LTS
+                                  </option>
+                                  <option value="Ubuntu 20.04">
+                                    Ubuntu 20.04 LTS
+                                  </option>
                                   <option value="CentOS 8">CentOS 8</option>
                                   <option value="CentOS 7">CentOS 7</option>
                                   <option value="Debian 12">Debian 12</option>
                                   <option value="Debian 11">Debian 11</option>
-                                  <option value="Rocky Linux 9">Rocky Linux 9</option>
-                                  <option value="Rocky Linux 8">Rocky Linux 8</option>
+                                  <option value="Rocky Linux 9">
+                                    Rocky Linux 9
+                                  </option>
+                                  <option value="Rocky Linux 8">
+                                    Rocky Linux 8
+                                  </option>
                                 </>
                               ) : (
                                 <>
-                                  <option value="Windows Server 2022">Windows Server 2022</option>
-                                  <option value="Windows Server 2019">Windows Server 2019</option>
-                                  <option value="Windows Server 2016">Windows Server 2016</option>
+                                  <option value="Windows Server 2022">
+                                    Windows Server 2022
+                                  </option>
+                                  <option value="Windows Server 2019">
+                                    Windows Server 2019
+                                  </option>
+                                  <option value="Windows Server 2016">
+                                    Windows Server 2016
+                                  </option>
                                 </>
                               )}
                             </select>
@@ -1665,7 +1699,10 @@ export default function Main() {
                               placeholder="192.168.1.1"
                               value={newServer.ip}
                               onChange={(e) =>
-                                setNewServer({ ...newServer, ip: e.target.value })
+                                setNewServer({
+                                  ...newServer,
+                                  ip: e.target.value,
+                                })
                               }
                               required
                             />
@@ -1678,7 +1715,10 @@ export default function Main() {
                               placeholder="22"
                               value={newServer.port}
                               onChange={(e) =>
-                                setNewServer({ ...newServer, port: e.target.value })
+                                setNewServer({
+                                  ...newServer,
+                                  port: e.target.value,
+                                })
                               }
                               required
                             />
@@ -1703,7 +1743,7 @@ export default function Main() {
                             <Label htmlFor="purpose">서버 용도</Label>
                             <select
                               id="purpose"
-                              className="w-full h-10 px-3 border rounded-md border-input bg-background text-sm"
+                              className="w-full h-10 px-3 text-sm border rounded-md border-input bg-background"
                               value={newServer.purpose}
                               onChange={(e) =>
                                 setNewServer({
@@ -1716,7 +1756,9 @@ export default function Main() {
                               <option value="운영">운영 (Production)</option>
                               <option value="개발">개발 (Development)</option>
                               <option value="테스트">테스트 (Test)</option>
-                              <option value="스테이징">스테이징 (Staging)</option>
+                              <option value="스테이징">
+                                스테이징 (Staging)
+                              </option>
                               <option value="백업">백업 (Backup)</option>
                               <option value="기타">기타</option>
                             </select>
@@ -1798,52 +1840,53 @@ export default function Main() {
                           소프트웨어 설치
                         </h3>
                         <div className="space-y-3">
-                        <Label>설치할 소프트웨어 (선택)</Label>
-                        <div className="grid grid-cols-2 gap-3 p-4 border rounded-lg bg-muted/20">
-                          {softwareOptions.map((software) => {
-                            const isSelected = newServer.softwareToInstall.some(
-                              (s) => s.name === software.name,
-                            );
-                            return (
-                              <div
-                                key={software.name}
-                                className={`p-3 rounded-lg border-2 transition-all cursor-pointer ${
-                                  isSelected
-                                    ? "border-primary bg-primary/10"
-                                    : "border-border hover:border-primary/50"
-                                }`}
-                                onClick={() => handleSoftwareToggle(software)}
-                              >
-                                <div className="flex items-center gap-2">
-                                  <div
-                                    className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
-                                      isSelected
-                                        ? "bg-primary border-primary"
-                                        : "border-muted-foreground"
-                                    }`}
-                                  >
-                                    {isSelected && (
-                                      <div className="w-2 h-2 bg-white rounded-sm" />
-                                    )}
+                          <Label>설치할 소프트웨어 (선택)</Label>
+                          <div className="grid grid-cols-2 gap-3 p-4 border rounded-lg bg-muted/20">
+                            {softwareOptions.map((software) => {
+                              const isSelected =
+                                newServer.softwareToInstall.some(
+                                  (s) => s.name === software.name,
+                                );
+                              return (
+                                <div
+                                  key={software.name}
+                                  className={`p-3 rounded-lg border-2 transition-all cursor-pointer ${
+                                    isSelected
+                                      ? "border-primary bg-primary/10"
+                                      : "border-border hover:border-primary/50"
+                                  }`}
+                                  onClick={() => handleSoftwareToggle(software)}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <div
+                                      className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
+                                        isSelected
+                                          ? "bg-primary border-primary"
+                                          : "border-muted-foreground"
+                                      }`}
+                                    >
+                                      {isSelected && (
+                                        <div className="w-2 h-2 bg-white rounded-sm" />
+                                      )}
+                                    </div>
+                                    <span className="text-sm font-medium">
+                                      {software.name}
+                                    </span>
                                   </div>
-                                  <span className="text-sm font-medium">
-                                    {software.name}
-                                  </span>
+                                  {isSelected && (
+                                    <p className="mt-1 ml-6 text-xs text-muted-foreground">
+                                      설치 경로: {software.path}
+                                    </p>
+                                  )}
                                 </div>
-                                {isSelected && (
-                                  <p className="mt-1 ml-6 text-xs text-muted-foreground">
-                                    설치 경로: {software.path}
-                                  </p>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                        {newServer.softwareToInstall.length === 0 && (
-                          <p className="text-sm italic text-muted-foreground">
-                            선택하지 않으면 기본 OS만 설치됩니다
-                          </p>
-                        )}
+                              );
+                            })}
+                          </div>
+                          {newServer.softwareToInstall.length === 0 && (
+                            <p className="text-sm italic text-muted-foreground">
+                              선택하지 않으면 기본 OS만 설치됩니다
+                            </p>
+                          )}
                         </div>
                       </div>
 
