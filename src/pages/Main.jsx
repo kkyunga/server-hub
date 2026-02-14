@@ -908,9 +908,9 @@ export default function Main() {
   const [connectDialogServer, setConnectDialogServer] = useState(null);
   const [detailViewServer, setDetailViewServer] = useState(null);
   const [showUserProfile, setShowUserProfile] = useState(false);
-  const [isVerified, setIsVerified] = useState(false);
-  const [verificationCode, setVerificationCode] = useState("");
-  const [verifyError, setVerifyError] = useState("");
+  // const [isVerified, setIsVerified] = useState(false);
+  // const [verificationCode, setVerificationCode] = useState("");
+  // const [verifyError, setVerifyError] = useState("");
   const [connectAuth, setConnectAuth] = useState({
     type: "password",
     username: "",
@@ -1171,22 +1171,22 @@ export default function Main() {
     }
   };
 
-  const handleVerify = (e) => {
-    e.preventDefault();
-    setVerifyError("");
+  // const handleVerify = (e) => {
+  //   e.preventDefault();
+  //   setVerifyError("");
 
-    if (!verificationCode) {
-      setVerifyError("인증번호를 입력해주세요.");
-      return;
-    }
+  //   if (!verificationCode) {
+  //     setVerifyError("인증번호를 입력해주세요.");
+  //     return;
+  //   }
 
-    // 인증번호 검증 (4567abc)
-    if (verificationCode === "4567abc") {
-      setIsVerified(true);
-    } else {
-      setVerifyError("인증번호가 올바르지 않습니다.");
-    }
-  };
+  //   // 인증번호 검증 (4567abc)
+  //   if (verificationCode === "4567abc") {
+  //     setIsVerified(true);
+  //   } else {
+  //     setVerifyError("인증번호가 올바르지 않습니다.");
+  //   }
+  // };
 
   if (showUserProfile) {
     return (
@@ -1208,16 +1208,13 @@ export default function Main() {
 
   return (
     <div className="relative flex flex-col min-h-screen bg-background">
-      {/* 2차 인증 오버레이 */}
-      {!isVerified && (
+      {/* 2차 인증 오버레이 - 주석 처리됨 */}
+      {/* {!isVerified && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          {/* 블러 처리된 배경 */}
           <div className="absolute inset-0 backdrop-blur-md bg-gradient-to-br from-black/30 via-black/40 to-black/30" />
 
-          {/* GIF + 인증 입력 */}
           <div className="relative z-10 px-4">
             <Card className="w-full max-w-md overflow-hidden shadow-2xl border-primary/20 bg-card/95 backdrop-blur-sm">
-              {/* GIF */}
               <div className="w-full">
                 <img
                   src="/videos/grok-video-3a830325-05f7-4015-9de2-a46d21f17030.gif"
@@ -1226,7 +1223,6 @@ export default function Main() {
                 />
               </div>
 
-              {/* 인증 입력 */}
               <CardContent className="p-6">
                 <form onSubmit={handleVerify} className="space-y-4">
                   <div className="mb-4 text-center">
@@ -1274,7 +1270,7 @@ export default function Main() {
             </Card>
           </div>
         </div>
-      )}
+      )} */}
 
       <header className="border-b shadow-sm bg-card">
         <div className="container flex items-center justify-between px-6 py-4 mx-auto">
