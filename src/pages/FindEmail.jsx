@@ -12,7 +12,7 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useFindEmail } from "@/hooks/queries/findEmail";
+import { useFindEmail } from "@/hooks/queries/useFindEmail";
 
 export default function FindEmail() {
   const navigate = useNavigate();
