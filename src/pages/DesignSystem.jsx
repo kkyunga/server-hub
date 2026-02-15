@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import {useRef, useState} from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -6,11 +6,42 @@ import { Label } from '@/components/ui/label'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
+import SockJS from 'sockjs-client';
+import { Stomp } from '@stomp/stompjs';
 
 export default function DesignSystem() {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [showSuccess, setShowSuccess] = useState(false)
+
+  // --- Kafka 테스트용 상태 ---
+  const [messages, setMessages] = useState([])
+  const [isConnected, setIsConnected] = useState(false)
+  const socketRef = useRef(null)
+
+  const connectKafka = () => {
+    // http가 아니라 ws 프로토콜을 사용합니다.
+    const wsUrl = 'ws://localhost:9080/api/ws-connect';
+    const stompClient = Stomp.over(new WebSocket(wsUrl));
+
+    stompClient.connect({}, (frame) => {
+      setIsConnected(true);
+      stompClient.subscribe('/topic/monitor', (msg) => {
+        setMessages((prev) => [msg.body, ...prev].slice(0, 20));
+      });
+    }, (err) => {
+      console.error(err);
+    });
+
+    socketRef.current = stompClient;
+  };
+
+  const disconnectKafka = () => {
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      setIsConnected(false);
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -39,6 +70,66 @@ export default function DesignSystem() {
         )}
 
         <div className="grid md:grid-cols-2 gap-6">
+
+          {/* --- Kafka 테스트 카드 수정본 --- */}
+          <Card className="border-primary/50 shadow-md">
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle>Kafka 실시간 모니터링</CardTitle>
+                <Badge variant={isConnected ? "default" : "destructive"}>
+                  {isConnected ? "연결됨" : "연결 끊김"}
+                </Badge>
+              </div>
+              <CardDescription>DB - Kafka - WebSocket 흐름 테스트</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-2">
+                <Button
+                    type="button"
+                    onClick={connectKafka}
+                    disabled={isConnected}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  연결 시작
+                </Button>
+                <Button
+                    type="button"
+                    onClick={disconnectKafka}
+                    disabled={!isConnected}
+                    variant="outline"
+                >
+                  연결 종료
+                </Button>
+                <Button
+                    type="button"
+                    onClick={() => setMessages([])}
+                    variant="ghost"
+                    size="sm"
+                >
+                  비우기
+                </Button>
+              </div>
+
+              <div className="h-[200px] border rounded-md bg-muted/30 p-4 overflow-y-auto font-mono text-xs">
+                {messages.length === 0 ? (
+                    <p className="text-muted-foreground text-center pt-20">수신된 메시지가 없습니다.</p>
+                ) : (
+                    messages.map((msg, idx) => (
+                        <div key={idx} className="mb-2 pb-2 border-b last:border-0 border-primary/20 text-foreground">
+            <span className="text-primary font-bold mr-2">
+              [{new Date().toLocaleTimeString()}]
+            </span>
+                          {typeof msg === 'object' ? JSON.stringify(msg) : msg}
+                        </div>
+                    ))
+                )}
+              </div>
+            </CardContent>
+            <CardFooter>
+              <p className="text-xs text-muted-foreground">※ 백엔드의 /ws/monitor 엔드포인트와 통신합니다.</p>
+            </CardFooter>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle>Button 컴포넌트</CardTitle>
