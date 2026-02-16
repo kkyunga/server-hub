@@ -6,8 +6,8 @@ export const useLogin = (setLoginAttemps, setError) => {
 
   return useMutation({
     mutationFn: loginApi,
-    onSuccess: (data) => {
-      const token = data.accessToken;
+    onSuccess: (res) => {
+      const token = res.data.accessToken;
       if (token) {
         localStorage.setItem("userToken", token);
         navigate("/main");

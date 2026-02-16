@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useFindEmail } from "@/hooks/queries/useFindEmail";
+import { useSendLink } from "@/hooks/queries/useSendLink";
 
 export default function FindEmail() {
   const navigate = useNavigate();
@@ -22,6 +23,7 @@ export default function FindEmail() {
   });
   const [foundEmail, setFoundEmail] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const handleChange = (e) => {
     setFormData({
@@ -31,6 +33,10 @@ export default function FindEmail() {
   };
   const { mutate: findEmail, isPending } = useFindEmail(
     setFoundEmail,
+    setError,
+  );
+  const { mutate: sendResetLink, isPending: isSending } = useSendLink(
+    setSuccess,
     setError,
   );
 
@@ -57,6 +63,12 @@ export default function FindEmail() {
             {error && (
               <Alert variant="destructive">
                 <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            {success && (
+              <Alert variant="success">
+                <AlertDescription>{success}</AlertDescription>
               </Alert>
             )}
 
@@ -98,18 +110,33 @@ export default function FindEmail() {
               </p>
             </div>
 
-            <Button type="submit" className="w-full" size="lg">
-              이메일 찾기
-            </Button>
-
-            {foundEmail && (
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={() => navigate("/login")}
-              >
-                로그인하러 가기
+            {foundEmail ? (
+              <>
+                <Button
+                  type="button"
+                  className="w-full"
+                  size="lg"
+                  disabled={isSending}
+                  onClick={() => {
+                    setError("");
+                    setSuccess("");
+                    sendResetLink({ email: foundEmail, name: formData.name });
+                  }}
+                >
+                  {isSending ? "전송 중..." : "비밀번호 초기화 링크 보내기"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => navigate("/login")}
+                >
+                  로그인하러 가기
+                </Button>
+              </>
+            ) : (
+              <Button type="submit" className="w-full" size="lg">
+                이메일 찾기
               </Button>
             )}
           </form>

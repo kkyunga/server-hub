@@ -1,82 +1,122 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
-import { Alert, AlertDescription } from '@/components/ui/alert'
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useConfirmEmail } from "@/hooks/queries/useConfirmEmail";
+import { useSignUp } from "@/hooks/queries/useSignUp";
 
 export default function SignUp() {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    verificationCode: '',
-    phone: '',
-    password: '',
-    passwordConfirm: ''
-  })
-  const [isCodeSent, setIsCodeSent] = useState(false)
-  const [isCodeVerified, setIsCodeVerified] = useState(false)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
+    name: "",
+    email: "",
+    verificationCode: "",
+    phone: "",
+    password: "",
+    passwordConfirm: "",
+  });
+  const [isCodeSent, setIsCodeSent] = useState(false);
+  const [isCodeVerified, setIsCodeVerified] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [code, setCode] = useState("");
+
+  const { mutate: confirmEmail, isPending: isSendingCode } = useConfirmEmail(
+    setIsCodeSent,
+    setSuccess,
+    setError,
+    setCode,
+  );
+
+  const resetEmail = () => {
+    setFormData((prev) => ({ ...prev, email: "", verificationCode: "" }));
+    setIsCodeSent(false);
+    setIsCodeVerified(false);
+    setCode("");
+  };
+
+  const { mutate: signUp, isPending: isSigningUp } = useSignUp(
+    setError,
+    navigate,
+    resetEmail,
+  );
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
-    })
-  }
+      [e.target.name]: e.target.value,
+    });
+  };
 
   const handleSendCode = async () => {
     if (!formData.email) {
-      setError('이메일을 입력해주세요.')
-      return
+      setError("이메일을 입력해주세요.");
+      return;
     }
-    // TODO: API 호출 - 인증번호 발송
-    setIsCodeSent(true)
-    setSuccess('인증번호가 이메일로 전송되었습니다.')
-    setTimeout(() => setSuccess(''), 3000)
-  }
+    setError("");
+    confirmEmail({ email: formData.email });
+  };
 
   const handleVerifyCode = async () => {
     if (!formData.verificationCode) {
-      setError('인증번호를 입력해주세요.')
-      return
+      setError("인증번호를 입력해주세요.");
+      return;
     }
-    // TODO: API 호출 - 인증번호 검증
-    setIsCodeVerified(true)
-    setSuccess('이메일 인증이 완료되었습니다.')
-    setTimeout(() => setSuccess(''), 3000)
-  }
+    if (formData.verificationCode !== String(code)) {
+      debugger;
+      setError("인증번호가 일치하지 않습니다.");
+      return;
+    }
+    setIsCodeVerified(true);
+    setSuccess("이메일 인증이 완료되었습니다.");
+    setTimeout(() => setSuccess(""), 3000);
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
+    e.preventDefault();
+    setError("");
 
     if (!isCodeVerified) {
-      setError('이메일 인증을 완료해주세요.')
-      return
+      setError("이메일 인증을 완료해주세요.");
+      return;
+    }
+
+    const passwordRegex = /^(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
+    if (!passwordRegex.test(formData.password)) {
+      setError("비밀번호는 8자리 이상, 특수문자를 포함해야 합니다.");
+      return;
     }
 
     if (formData.password !== formData.passwordConfirm) {
-      setError('비밀번호가 일치하지 않습니다.')
-      return
+      setError("비밀번호가 일치하지 않습니다.");
+      return;
     }
 
-    // TODO: API 호출 - 회원가입
-    console.log('회원가입 데이터:', formData)
-    setSuccess('회원가입이 완료되었습니다.')
-    setTimeout(() => {
-      navigate('/login')
-    }, 2000)
-  }
+    signUp({
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      password: formData.password,
+    });
+  };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="flex items-center justify-center min-h-screen p-4 bg-background">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl font-heading text-primary">회원가입</CardTitle>
+          <CardTitle className="text-2xl font-heading text-primary">
+            회원가입
+          </CardTitle>
           <CardDescription>새로운 계정을 생성합니다</CardDescription>
         </CardHeader>
         <CardContent>
@@ -122,10 +162,14 @@ export default function SignUp() {
                 <Button
                   type="button"
                   onClick={handleSendCode}
-                  disabled={isCodeVerified || !formData.email}
+                  disabled={isCodeVerified || !formData.email || isSendingCode}
                   variant={isCodeSent ? "secondary" : "default"}
                 >
-                  {isCodeSent ? '재발송' : '발송'}
+                  {isSendingCode
+                    ? "발송 중..."
+                    : isCodeSent
+                      ? "재발송"
+                      : "발송"}
                 </Button>
               </div>
             </div>
@@ -150,7 +194,7 @@ export default function SignUp() {
                     onClick={handleVerifyCode}
                     disabled={isCodeVerified || !formData.verificationCode}
                   >
-                    {isCodeVerified ? '완료' : '검증'}
+                    {isCodeVerified ? "완료" : "검증"}
                   </Button>
                 </div>
               </div>
@@ -180,6 +224,16 @@ export default function SignUp() {
                 onChange={handleChange}
                 required
               />
+              {formData.password && (
+                <div className="text-sm space-y-1">
+                  <p className={formData.password.length >= 8 ? "text-green-600" : "text-red-500"}>
+                    {formData.password.length >= 8 ? "✓" : "✗"} 8자리 이상
+                  </p>
+                  <p className={/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password) ? "text-green-600" : "text-red-500"}>
+                    {/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password) ? "✓" : "✗"} 특수문자 포함
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -195,17 +249,22 @@ export default function SignUp() {
               />
             </div>
 
-            <Button type="submit" className="w-full" size="lg">
-              가입하기
+            <Button
+              type="submit"
+              className="w-full"
+              size="lg"
+              disabled={!isCodeVerified || isSigningUp}
+            >
+              {isSigningUp ? "가입 중..." : "가입하기"}
             </Button>
           </form>
         </CardContent>
         <CardFooter className="flex justify-center">
           <p className="text-sm text-muted-foreground">
-            이미 계정이 있으신가요?{' '}
+            이미 계정이 있으신가요?{" "}
             <button
-              onClick={() => navigate('/login')}
-              className="text-primary hover:underline font-medium"
+              onClick={() => navigate("/login")}
+              className="font-medium text-primary hover:underline"
             >
               로그인
             </button>
@@ -213,5 +272,5 @@ export default function SignUp() {
         </CardFooter>
       </Card>
     </div>
-  )
+  );
 }

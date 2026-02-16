@@ -7,7 +7,6 @@ export const useFindEmail = (setFoundEmail, setError) => {
       setFoundEmail(data.data.email);
     },
     onError: (err) => {
-      debugger;
       const serverMessage = err.response?.data?.message;
       const message = serverMessage || "이메일을 찾을수 없습니다";
       setError(message);

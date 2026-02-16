@@ -9,6 +9,7 @@ import Login from "@/pages/Login";
 import SignUp from "@/pages/SignUp";
 import FindEmail from "@/pages/FindEmail";
 import FindPassword from "@/pages/FindPassword";
+import FindPasswordResult from "@/pages/FindPasswordResult";
 import VerifyCode from "@/pages/VerifyCode";
 import DesignSystem from "@/pages/DesignSystem";
 import PrivateRoute from "@/pages/PrivateRoute";
@@ -48,6 +49,7 @@ function App() {
           <Route path="/signup" element={<SignUp />} />
           <Route path="/find-email" element={<FindEmail />} />
           <Route path="/find-password" element={<FindPassword />} />
+          <Route path="/find-password-result" element={<FindPasswordResult />} />
           <Route path="/verify-code" element={<VerifyCode />} />
           <Route path="/design-system" element={<DesignSystem />} />
 
