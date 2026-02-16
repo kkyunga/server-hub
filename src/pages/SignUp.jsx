@@ -58,6 +58,17 @@ export default function SignUp() {
     });
   };
 
+  const handlePhoneChange = (e) => {
+    const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
+    let formatted = digits;
+    if (digits.length > 7) {
+      formatted = `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+    } else if (digits.length > 3) {
+      formatted = `${digits.slice(0, 3)}-${digits.slice(3)}`;
+    }
+    setFormData({ ...formData, phone: formatted });
+  };
+
   const handleSendCode = async () => {
     if (!formData.email) {
       setError("이메일을 입력해주세요.");
@@ -201,16 +212,21 @@ export default function SignUp() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="phone">전화번호</Label>
+              <Label htmlFor="phone">휴대폰</Label>
               <Input
                 id="phone"
                 name="phone"
                 type="tel"
                 placeholder="010-1234-5678"
                 value={formData.phone}
-                onChange={handleChange}
+                onChange={handlePhoneChange}
                 required
               />
+              {formData.phone && (
+                <p className={`text-sm ${/^010-\d{4}-\d{4}$/.test(formData.phone) ? "text-green-600" : "text-red-500"}`}>
+                  {/^010-\d{4}-\d{4}$/.test(formData.phone) ? "✓" : "✗"} 010-0000-0000 형식
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
