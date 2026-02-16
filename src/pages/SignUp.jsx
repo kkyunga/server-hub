@@ -30,6 +30,7 @@ export default function SignUp() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [code, setCode] = useState("");
+  const [phoneError, setPhoneError] = useState("");
 
   const { mutate: confirmEmail, isPending: isSendingCode } = useConfirmEmail(
     setIsCodeSent,
@@ -49,6 +50,7 @@ export default function SignUp() {
     setError,
     navigate,
     resetEmail,
+    setPhoneError,
   );
 
   const handleChange = (e) => {
@@ -66,6 +68,7 @@ export default function SignUp() {
     } else if (digits.length > 3) {
       formatted = `${digits.slice(0, 3)}-${digits.slice(3)}`;
     }
+    setPhoneError("");
     setFormData({ ...formData, phone: formatted });
   };
 
@@ -225,6 +228,9 @@ export default function SignUp() {
                 <p className={`text-sm ${/^010-\d{4}-\d{4}$/.test(formData.phone) ? "text-green-600" : "text-red-500"}`}>
                   {/^010-\d{4}-\d{4}$/.test(formData.phone) ? "✓" : "✗"} 010-0000-0000 형식
                 </p>
+              )}
+              {phoneError && (
+                <p className="text-sm font-medium text-red-500">{phoneError}</p>
               )}
             </div>
 

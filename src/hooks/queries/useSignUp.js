@@ -1,6 +1,6 @@
 import { signUpApi } from "@/api/signUp";
 import { useMutation } from "@tanstack/react-query";
-export const useSignUp = (setError, navigate, resetEmail) => {
+export const useSignUp = (setError, navigate, resetEmail, setPhoneError) => {
   return useMutation({
     mutationFn: signUpApi,
     onSuccess: (res) => {
@@ -10,9 +10,13 @@ export const useSignUp = (setError, navigate, resetEmail) => {
     onError: (err) => {
       const serverMessage = err.response?.data?.message;
       const message = serverMessage || "회원가입 중 에러가 발생하였어요";
-      setError(message);
-      if (serverMessage?.includes("이미 존재")) {
-        resetEmail();
+      if (serverMessage?.includes("전화번호")) {
+        setPhoneError(serverMessage);
+      } else {
+        setError(message);
+        if (serverMessage?.includes("이미 존재")) {
+          resetEmail();
+        }
       }
     },
   });
