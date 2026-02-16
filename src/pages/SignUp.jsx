@@ -87,7 +87,6 @@ export default function SignUp() {
       return;
     }
     if (formData.verificationCode !== String(code)) {
-      debugger;
       setError("인증번호가 일치하지 않습니다.");
       return;
     }
