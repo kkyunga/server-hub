@@ -109,7 +109,6 @@ export default function SignUp() {
     }
 
     if (formData.password !== formData.passwordConfirm) {
-      setError("비밀번호가 일치하지 않습니다.");
       return;
     }
 
@@ -263,6 +262,11 @@ export default function SignUp() {
                 onChange={handleChange}
                 required
               />
+              {formData.passwordConfirm && (
+                <p className={`text-sm font-medium ${formData.password === formData.passwordConfirm ? "text-green-600" : "text-red-500"}`}>
+                  {formData.password === formData.passwordConfirm ? "✓ 비밀번호가 일치합니다" : "✗ 비밀번호가 일치하지 않습니다"}
+                </p>
+              )}
             </div>
 
             <Button
