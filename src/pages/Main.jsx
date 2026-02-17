@@ -1,11 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "@/api/axios";
-import { serverList } from "@/api/server";
+import { useValidateKey } from "@/hooks/queries/useValidateKey";
+import { useServerAdd } from "@/hooks/queries/useServerAdd";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
+import { useServerList } from "@/hooks/queries/useServerList";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -902,9 +910,6 @@ function UserProfile({ onClose, servers }) {
 export default function Main() {
   const navigate = useNavigate();
 
-  // API 기본 URL (환경변수에서 가져오기)
-  const API_BASE_URL = import.meta.env.API_BASE_URL || "http://localhost:9080";
-
   const [selectedServer, setSelectedServer] = useState(null);
   const [activeServer, setActiveServer] = useState(null);
   const [connectedServer, setConnectedServer] = useState(null);
@@ -952,31 +957,14 @@ export default function Main() {
     },
   ]);
 
-  const [servers, setServers] = useState([]);
-
-  useEffect(() => {
-    const fetchServers = async () => {
-      try {
-        const res = await serverList();
-        const formatted = res.data.map((item) => ({
-          id: item.id,
-          label: item.label,
-          ip: item.ip,
-          port: String(item.port),
-          os: item.os,
-          country: item.country,
-          cloudService: item.cloudService,
-          software: item.middlewares || [],
-        }));
-        setServers(formatted);
-      } catch (error) {
-        console.error("서버 목록 조회 실패:", error);
-      }
-    };
-    fetchServers();
-  }, []);
+  const { data: servers = [], isLoading, isError } = useServerList();
 
   const [showAddForm, setShowAddForm] = useState(false);
+  const [keyValidation, setKeyValidation] = useState({
+    status: "",
+    message: "",
+  });
+  const [isDragging, setIsDragging] = useState(false);
   const [newServer, setNewServer] = useState({
     label: "",
     ip: "",
@@ -1028,6 +1016,36 @@ export default function Main() {
     });
   };
 
+  const { mutate: validateKey } = useValidateKey(
+    setKeyValidation,
+    setNewServer,
+  );
+
+  const { mutate: addServer, isPending: isAdding } = useServerAdd(
+    setShowAddForm,
+    setNewServer,
+  );
+
+  const handleKeyFile = (file) => {
+    if (!file) return;
+    const ext = file.name.split(".").pop().toLowerCase();
+    if (!["pem", "ppk", "key"].includes(ext)) {
+      setKeyValidation({
+        status: "error",
+        message: "지원하지 않는 파일 형식입니다 (.pem, .ppk, .key)",
+      });
+      return;
+    }
+    validateKey(file);
+  };
+
+  const handleKeyDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    handleKeyFile(file);
+  };
+
   const handleServerClick = (server) => {
     if (connectedServer || detailViewServer) return;
     setDetailViewServer(server);
@@ -1068,11 +1086,9 @@ export default function Main() {
     setActiveServer(null);
   };
 
-  const handleAddServer = async (e) => {
+  const handleAddServer = (e) => {
     e.preventDefault();
-
-    // 백엔드로 보낼 데이터 준비
-    const serverData = {
+    addServer({
       label: newServer.label,
       ip: newServer.ip,
       port: newServer.port,
@@ -1084,69 +1100,9 @@ export default function Main() {
       authType: newServer.authType,
       username: newServer.username,
       password: newServer.password,
+      keyFile: newServer.keyFile,
       softwareToInstall: newServer.softwareToInstall,
-    };
-
-    console.log("=== 서버 추가 요청 ===");
-    console.log("API URL:", `${API_BASE_URL}/api/servers`);
-    console.log("요청 데이터:", serverData);
-
-    try {
-      // 스프링 백엔드 API 호출
-      const response = await fetch(`${API_BASE_URL}/api/servers`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(serverData),
-      });
-
-      console.log("응답 상태:", response.status);
-      debugger;
-      if (!response.ok) {
-        throw new Error(`서버 추가 실패: ${response.status}`);
-      }
-
-      const result = await response.json();
-      console.log("응답 데이터:", result);
-
-      // 서버 추가 성공 시 로컬 상태 업데이트
-      const server = {
-        id: result.id || servers.length + 1,
-        ...newServer,
-        software: [],
-        lastIp: "",
-        lastCountry: "",
-      };
-
-      setServers([...servers, server]);
-      setShowAddForm(false);
-      setNewServer({
-        label: "",
-        ip: "",
-        port: "",
-        osType: "Linux",
-        osVersion: "Ubuntu 22.04",
-        country: "",
-        cloudService: "없음",
-        purpose: "",
-        authType: "password",
-        username: "",
-        password: "",
-        keyFile: null,
-        softwareToInstall: [
-          { name: "java", path: "/usr/lib/jvm" },
-          { name: "apache", path: "/usr/local/apache2" },
-        ],
-      });
-
-      console.log("서버 추가 완료:", server);
-      console.log("===================");
-    } catch (error) {
-      console.error("서버 추가 중 오류 발생:", error);
-      console.log("===================");
-      alert("서버 추가에 실패했습니다: " + error.message);
-    }
+    });
   };
 
   const handleDeleteServer = (id) => {
@@ -1171,23 +1127,6 @@ export default function Main() {
     }
   };
 
-  // const handleVerify = (e) => {
-  //   e.preventDefault();
-  //   setVerifyError("");
-
-  //   if (!verificationCode) {
-  //     setVerifyError("인증번호를 입력해주세요.");
-  //     return;
-  //   }
-
-  //   // 인증번호 검증 (4567abc)
-  //   if (verificationCode === "4567abc") {
-  //     setIsVerified(true);
-  //   } else {
-  //     setVerifyError("인증번호가 올바르지 않습니다.");
-  //   }
-  // };
-
   if (showUserProfile) {
     return (
       <UserProfile
@@ -1208,70 +1147,6 @@ export default function Main() {
 
   return (
     <div className="relative flex flex-col min-h-screen bg-background">
-      {/* 2차 인증 오버레이 - 주석 처리됨 */}
-      {/* {!isVerified && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 backdrop-blur-md bg-gradient-to-br from-black/30 via-black/40 to-black/30" />
-
-          <div className="relative z-10 px-4">
-            <Card className="w-full max-w-md overflow-hidden shadow-2xl border-primary/20 bg-card/95 backdrop-blur-sm">
-              <div className="w-full">
-                <img
-                  src="/videos/grok-video-3a830325-05f7-4015-9de2-a46d21f17030.gif"
-                  alt="Loading animation"
-                  className="w-full h-auto"
-                />
-              </div>
-
-              <CardContent className="p-6">
-                <form onSubmit={handleVerify} className="space-y-4">
-                  <div className="mb-4 text-center">
-                    <h3 className="mb-1 text-xl font-bold text-primary">
-                      2차 인증
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      인증번호를 입력해주세요
-                    </p>
-                  </div>
-
-                  {verifyError && (
-                    <div className="p-3 border rounded-lg bg-red-500/10 border-red-500/50">
-                      <p className="text-sm font-medium text-center text-red-600">
-                        {verifyError}
-                      </p>
-                    </div>
-                  )}
-
-                  <Input
-                    id="verify-code"
-                    type="text"
-                    placeholder="인증번호 입력"
-                    value={verificationCode}
-                    onChange={(e) => setVerificationCode(e.target.value)}
-                    className="h-12 text-lg font-semibold tracking-widest text-center"
-                    autoFocus
-                  />
-
-                  <p className="text-xs text-center text-muted-foreground">
-                    테스트 코드:{" "}
-                    <span className="font-mono font-semibold text-primary">
-                      4567abc
-                    </span>
-                  </p>
-
-                  <Button
-                    type="submit"
-                    className="w-full text-base font-semibold h-11"
-                  >
-                    인증 확인
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      )} */}
-
       <header className="border-b shadow-sm bg-card">
         <div className="container flex items-center justify-between px-6 py-4 mx-auto">
           <Link to="/main" className="transition-opacity hover:opacity-80">
@@ -1609,9 +1484,7 @@ export default function Main() {
                               <option value="없음">없음</option>
                               <option value="AWS">AWS</option>
                               <option value="GCP">GCP</option>
-                              <option value="Azure">Azure</option>
-                              <option value="NCLOUD">NCLOUD</option>
-                              <option value="KTCLOUD">KTCLOUD</option>
+                              <option value="Azure">AZURE</option>
                               <option value="기타">기타</option>
                             </select>
                           </div>
@@ -1804,27 +1677,71 @@ export default function Main() {
 
                           <div className="space-y-2 md:col-span-2">
                             <Label htmlFor="keyFile">인증키 파일 (선택)</Label>
-                            <div className="p-6 text-center transition-colors border-2 border-dashed rounded-lg cursor-pointer hover:bg-accent/50">
-                              <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-                              <p className="text-sm text-muted-foreground">
-                                클릭하여 파일 선택 또는 드래그 앤 드롭
-                              </p>
+                            <div
+                              className={`p-6 text-center transition-colors border-2 border-dashed rounded-lg cursor-pointer ${
+                                isDragging
+                                  ? "border-primary bg-primary/10"
+                                  : newServer.keyFile
+                                    ? "border-green-400 bg-green-50"
+                                    : "hover:bg-accent/50"
+                              }`}
+                              onDragOver={(e) => {
+                                e.preventDefault();
+                                setIsDragging(true);
+                              }}
+                              onDragLeave={() => setIsDragging(false)}
+                              onDrop={handleKeyDrop}
+                              onClick={() =>
+                                document.getElementById("keyFile").click()
+                              }
+                            >
+                              {newServer.keyFile ? (
+                                <>
+                                  <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-500" />
+                                  <p className="text-sm font-medium text-green-700">
+                                    {newServer.keyFile.name}
+                                  </p>
+                                  <p className="mt-1 text-xs text-muted-foreground">
+                                    클릭하여 다른 파일로 변경
+                                  </p>
+                                </>
+                              ) : (
+                                <>
+                                  <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                                  <p className="text-sm text-muted-foreground">
+                                    {isDragging
+                                      ? "여기에 파일을 놓으세요"
+                                      : "클릭하여 파일 선택 또는 드래그 앤 드롭"}
+                                  </p>
+                                  <p className="mt-1 text-xs text-muted-foreground">
+                                    .pem, .ppk, .key 파일 지원
+                                  </p>
+                                </>
+                              )}
                               <input
                                 id="keyFile"
                                 type="file"
                                 className="hidden"
-                                accept=".pem,.ppk"
+                                accept=".pem,.ppk,.key"
                                 onChange={(e) =>
-                                  setNewServer({
-                                    ...newServer,
-                                    keyFile: e.target.files[0],
-                                  })
+                                  handleKeyFile(e.target.files[0])
                                 }
                               />
                             </div>
-                            {newServer.keyFile && (
-                              <p className="text-sm text-muted-foreground">
-                                선택된 파일: {newServer.keyFile.name}
+                            {keyValidation.message && (
+                              <p
+                                className={`text-sm font-medium ${
+                                  keyValidation.status === "success"
+                                    ? "text-green-600"
+                                    : keyValidation.status === "error"
+                                      ? "text-red-500"
+                                      : "text-yellow-600"
+                                }`}
+                              >
+                                {keyValidation.status === "success" && "✓ "}
+                                {keyValidation.status === "error" && "✗ "}
+                                {keyValidation.status === "loading" && "⏳ "}
+                                {keyValidation.message}
                               </p>
                             )}
                           </div>
@@ -1889,11 +1806,32 @@ export default function Main() {
                       </div>
 
                       {/* 제출 버튼 */}
-                      <Button type="submit" className="w-full" size="lg">
-                        서버 추가
+                      <Button type="submit" className="w-full" size="lg" disabled={isAdding}>
+                        {isAdding ? "서버 추가 중..." : "서버 추가"}
                       </Button>
                     </form>
                   </CardContent>
+                </Card>
+              )}
+
+              {isLoading && (
+                <Card className="p-16 text-center">
+                  <Server className="w-20 h-20 mx-auto mb-4 opacity-50 animate-pulse text-muted-foreground" />
+                  <p className="text-lg font-semibold text-muted-foreground">
+                    서버 목록을 불러오는 중...
+                  </p>
+                </Card>
+              )}
+
+              {isError && (
+                <Card className="p-16 text-center">
+                  <AlertTriangle className="w-20 h-20 mx-auto mb-4 text-red-400 opacity-70" />
+                  <p className="mb-2 text-xl font-semibold text-red-600">
+                    서버 정보를 불러오는 중 문제가 발생했습니다
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    잠시 후 다시 시도해주세요
+                  </p>
                 </Card>
               )}
 
@@ -1951,7 +1889,7 @@ export default function Main() {
                         <p className="text-xs font-semibold mb-1.5 text-muted-foreground">
                           설치된 소프트웨어
                         </p>
-                        <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto">
+                        <div className="flex flex-wrap gap-1 overflow-y-auto max-h-24">
                           {server.software.map((sw, idx) => (
                             <Badge
                               key={idx}
@@ -1963,10 +1901,9 @@ export default function Main() {
                           ))}
                         </div>
                       </div>
-
                     </CardContent>
 
-                    <CardFooter className="mt-auto pt-0">
+                    <CardFooter className="pt-0 mt-auto">
                       <div className="grid grid-cols-2 gap-1.5 w-full">
                         <Button
                           size="sm"
@@ -1995,7 +1932,7 @@ export default function Main() {
                 ))}
               </div>
 
-              {servers.length === 0 && (
+              {!isLoading && !isError && servers.length === 0 && (
                 <Card className="p-16 text-center">
                   <Server className="w-20 h-20 mx-auto mb-4 opacity-50 text-muted-foreground" />
                   <p className="mb-2 text-xl font-semibold">
