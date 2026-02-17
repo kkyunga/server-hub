@@ -970,7 +970,7 @@ export default function Main() {
     ip: "",
     port: "",
     osType: "Linux",
-    osVersion: "Ubuntu 22.04",
+    osVersion: "0",
     country: "",
     cloudService: "없음",
     purpose: "",
@@ -1481,11 +1481,11 @@ export default function Main() {
                                 })
                               }
                             >
-                              <option value="없음">없음</option>
-                              <option value="AWS">AWS</option>
-                              <option value="GCP">GCP</option>
-                              <option value="Azure">AZURE</option>
-                              <option value="기타">기타</option>
+                              <option value="emp">없음</option>
+                              <option value="aws">AWS</option>
+                              <option value="gcp">GCP</option>
+                              <option value="azu">AZURE</option>
+                              <option value="etc">기타</option>
                             </select>
                           </div>
 
@@ -1497,10 +1497,7 @@ export default function Main() {
                               value={newServer.osType}
                               onChange={(e) => {
                                 const osType = e.target.value;
-                                const defaultVersion =
-                                  osType === "Linux"
-                                    ? "Ubuntu 22.04"
-                                    : "Windows Server 2022";
+                                const defaultVersion = "0";
                                 setNewServer({
                                   ...newServer,
                                   osType,
@@ -1530,34 +1527,20 @@ export default function Main() {
                             >
                               {newServer.osType === "Linux" ? (
                                 <>
-                                  <option value="Ubuntu 22.04">
-                                    Ubuntu 22.04 LTS
-                                  </option>
-                                  <option value="Ubuntu 20.04">
-                                    Ubuntu 20.04 LTS
-                                  </option>
-                                  <option value="CentOS 8">CentOS 8</option>
-                                  <option value="CentOS 7">CentOS 7</option>
-                                  <option value="Debian 12">Debian 12</option>
-                                  <option value="Debian 11">Debian 11</option>
-                                  <option value="Rocky Linux 9">
-                                    Rocky Linux 9
-                                  </option>
-                                  <option value="Rocky Linux 8">
-                                    Rocky Linux 8
-                                  </option>
+                                  <option value="0">Ubuntu 22.04 LTS</option>
+                                  <option value="1">Ubuntu 20.04 LTS</option>
+                                  <option value="2">CentOS 8</option>
+                                  <option value="3">CentOS 7</option>
+                                  <option value="4">Debian 12</option>
+                                  <option value="5">Debian 11</option>
+                                  <option value="6">Rocky Linux 9</option>
+                                  <option value="7">Rocky Linux 8</option>
                                 </>
                               ) : (
                                 <>
-                                  <option value="Windows Server 2022">
-                                    Windows Server 2022
-                                  </option>
-                                  <option value="Windows Server 2019">
-                                    Windows Server 2019
-                                  </option>
-                                  <option value="Windows Server 2016">
-                                    Windows Server 2016
-                                  </option>
+                                  <option value="0">Windows Server 2022</option>
+                                  <option value="1">Windows Server 2019</option>
+                                  <option value="2">Windows Server 2016</option>
                                 </>
                               )}
                             </select>
@@ -1624,14 +1607,12 @@ export default function Main() {
                               }
                             >
                               <option value="">선택하세요</option>
-                              <option value="운영">운영 (Production)</option>
-                              <option value="개발">개발 (Development)</option>
-                              <option value="테스트">테스트 (Test)</option>
-                              <option value="스테이징">
-                                스테이징 (Staging)
-                              </option>
-                              <option value="백업">백업 (Backup)</option>
-                              <option value="기타">기타</option>
+                              <option value="p">운영 (Production)</option>
+                              <option value="d">개발 (Development)</option>
+                              <option value="t">테스트 (Test)</option>
+                              <option value="s">스테이징 (Staging)</option>
+                              <option value="b">백업 (Backup)</option>
+                              <option value="e">기타</option>
                             </select>
                           </div>
                         </div>
@@ -1806,7 +1787,12 @@ export default function Main() {
                       </div>
 
                       {/* 제출 버튼 */}
-                      <Button type="submit" className="w-full" size="lg" disabled={isAdding}>
+                      <Button
+                        type="submit"
+                        className="w-full"
+                        size="lg"
+                        disabled={isAdding}
+                      >
                         {isAdding ? "서버 추가 중..." : "서버 추가"}
                       </Button>
                     </form>

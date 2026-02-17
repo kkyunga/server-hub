@@ -15,7 +15,7 @@ export const useServerAdd = (setShowAddForm, setNewServer) => {
         ip: "",
         port: "",
         osType: "Linux",
-        osVersion: "Ubuntu 22.04",
+        osVersion: "0",
         country: "",
         cloudService: "없음",
         purpose: "",
