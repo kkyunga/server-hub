@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "@/api/axios";
 import { useValidateKey } from "@/hooks/queries/useValidateKey";
 import { useServerAdd } from "@/hooks/queries/useServerAdd";
+import { fetchServerSpecItems } from "@/api/serverSpec";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -959,6 +961,46 @@ export default function Main() {
 
   const { data: servers = [], isLoading, isError } = useServerList();
 
+  const {
+    data: serverSpec,
+    isLoading: specLoading,
+    error: specError,
+  } = useQuery({
+    queryKey: ["serverSpec"],
+    queryFn: fetchServerSpecItems,
+    select: (res) => res.data,
+  });
+  const rawOsList = serverSpec?.osList || [];
+  const osList = rawOsList.map((os) => {
+    const displayName = os.text || os.value;
+    let osType = "Linux";
+    if (String(displayName).startsWith("Windows")) osType = "Windows";
+    else if (String(displayName).startsWith("macOS")) osType = "macOS";
+    return { ...os, displayName, osType };
+  });
+  const purposeList = serverSpec?.serverPurposeList || [];
+  const cloudItemList = serverSpec?.cloudItemList || [];
+  const osTypes = [...new Set(osList.map((os) => os.osType))];
+
+  // 서버 spec 데이터 로드 후 osVersion 기본값 세팅
+  useEffect(() => {
+    if (osList.length > 0 && !newServer.osVersion) {
+      const firstOs = osList.find((os) => os.osType === newServer.osType);
+      if (firstOs) {
+        setNewServer((prev) => ({ ...prev, osVersion: String(firstOs.value) }));
+      }
+    }
+  }, [osList]);
+
+  useEffect(() => {
+    if (cloudItemList.length > 0 && !newServer.cloudService) {
+      setNewServer((prev) => ({
+        ...prev,
+        cloudService: String(cloudItemList[0].value),
+      }));
+    }
+  }, [cloudItemList]);
+
   const [showAddForm, setShowAddForm] = useState(false);
   const [keyValidation, setKeyValidation] = useState({
     status: "",
@@ -970,9 +1012,9 @@ export default function Main() {
     ip: "",
     port: "",
     osType: "Linux",
-    osVersion: "0",
+    osVersion: "",
     country: "",
-    cloudService: "없음",
+    cloudService: "",
     purpose: "",
     authType: "password",
     username: "",
@@ -1088,6 +1130,7 @@ export default function Main() {
 
   const handleAddServer = (e) => {
     e.preventDefault();
+
     addServer({
       label: newServer.label,
       ip: newServer.ip,
@@ -1481,11 +1524,11 @@ export default function Main() {
                                 })
                               }
                             >
-                              <option value="emp">없음</option>
-                              <option value="aws">AWS</option>
-                              <option value="gcp">GCP</option>
-                              <option value="azu">AZURE</option>
-                              <option value="etc">기타</option>
+                              {cloudItemList.map((c) => (
+                                <option key={c.value} value={String(c.value)}>
+                                  {c.text || c.value}
+                                </option>
+                              ))}
                             </select>
                           </div>
 
@@ -1497,18 +1540,23 @@ export default function Main() {
                               value={newServer.osType}
                               onChange={(e) => {
                                 const osType = e.target.value;
-                                const defaultVersion = "0";
+                                const firstOs = osList.find(
+                                  (os) => os.osType === osType,
+                                );
                                 setNewServer({
                                   ...newServer,
                                   osType,
-                                  osVersion: defaultVersion,
+                                  osVersion: firstOs
+                                    ? String(firstOs.value)
+                                    : "",
                                 });
                               }}
                             >
-                              <option value="Linux">Linux</option>
-                              <option value="Windows Server">
-                                Windows Server
-                              </option>
+                              {osTypes.map((type) => (
+                                <option key={type} value={type}>
+                                  {type}
+                                </option>
+                              ))}
                             </select>
                           </div>
 
@@ -1525,24 +1573,16 @@ export default function Main() {
                                 })
                               }
                             >
-                              {newServer.osType === "Linux" ? (
-                                <>
-                                  <option value="0">Ubuntu 22.04 LTS</option>
-                                  <option value="1">Ubuntu 20.04 LTS</option>
-                                  <option value="2">CentOS 8</option>
-                                  <option value="3">CentOS 7</option>
-                                  <option value="4">Debian 12</option>
-                                  <option value="5">Debian 11</option>
-                                  <option value="6">Rocky Linux 9</option>
-                                  <option value="7">Rocky Linux 8</option>
-                                </>
-                              ) : (
-                                <>
-                                  <option value="0">Windows Server 2022</option>
-                                  <option value="1">Windows Server 2019</option>
-                                  <option value="2">Windows Server 2016</option>
-                                </>
-                              )}
+                              {osList
+                                .filter((os) => os.osType === newServer.osType)
+                                .map((os) => (
+                                  <option
+                                    key={os.value}
+                                    value={String(os.value)}
+                                  >
+                                    {os.displayName}
+                                  </option>
+                                ))}
                             </select>
                           </div>
 
@@ -1607,12 +1647,11 @@ export default function Main() {
                               }
                             >
                               <option value="">선택하세요</option>
-                              <option value="p">운영 (Production)</option>
-                              <option value="d">개발 (Development)</option>
-                              <option value="t">테스트 (Test)</option>
-                              <option value="s">스테이징 (Staging)</option>
-                              <option value="b">백업 (Backup)</option>
-                              <option value="e">기타</option>
+                              {purposeList.map((p) => (
+                                <option key={p.value} value={String(p.value)}>
+                                  {p.text || p.value}
+                                </option>
+                              ))}
                             </select>
                           </div>
                         </div>
